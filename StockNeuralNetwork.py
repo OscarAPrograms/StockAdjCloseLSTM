@@ -4,17 +4,13 @@ import yfinance as yf
 
 from sklearn.model_selection import train_test_split
 
-
-import pandas_ta as ta
-
-
 # Number of iterations the NN takes to train on the data.
 EPOCHS = 50
 # Fraction of the data used for evaluating the NN.
 TEST_SIZE = 0.3
 # Number of consecutive days inputted in the NN to predict the next Adj
 # Close.
-NUM_DAYS = 1
+NUM_DAYS = 7
 
 def main():
     """
@@ -45,7 +41,8 @@ def main():
     # Convert the pandas DataFrame to a NumPy array.
     data_set = data.to_numpy()
 
-    print(data)
+    # Scale the data_set so all values are between 0 and 1
+    data_set = data_set/1000
 
     # y contains Next Close values with at least NUM_DAYS-1 past days.
     y = list(data_set[NUM_DAYS-1:, -1]) 
@@ -83,9 +80,9 @@ def main():
     model.evaluate(x_test,  y_test, verbose=2)
 
     y_pred= model.predict(x_test)
-    for i in range(10):
-         print(y_pred[i])
-         print(y_test[i])
+    for i in range(40):
+         print("Predicted:", y_pred[i]*1000)
+         print("Actual:", y_test[i]*1000, "\n")
 
 
 def get_model():
@@ -96,13 +93,19 @@ def get_model():
     """
     model = tf.keras.models.Sequential([
          
-         tf.keras.layers.LSTM(256, input_shape = (7, 8)),
+         tf.keras.layers.LSTM(256, input_shape = (7, 4)),
          
          tf.keras.layers.Dense(256, activation = "tanh"),
+         
+         tf.keras.layers.Dropout(0.5),
 
          tf.keras.layers.Dense(256, activation = "tanh"),
 
+         tf.keras.layers.Dropout(0.5),
+
          tf.keras.layers.Dense(256, activation = "tanh"),
+
+         tf.keras.layers.Dropout(0.5),
 
          tf.keras.layers.Dense(1, activation = "linear"),
     ])
@@ -110,8 +113,7 @@ def get_model():
     # Compile model
     model.compile(
         optimizer = "adam",
-        loss = "mse",
-        metrics = ["accuracy"]
+        loss = "mse"
     )     
     return model
 
