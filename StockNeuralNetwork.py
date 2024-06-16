@@ -4,13 +4,17 @@ import yfinance as yf
 
 from sklearn.model_selection import train_test_split
 
+
+import pandas_ta as ta
+
+
 # Number of iterations the NN takes to train on the data.
 EPOCHS = 50
 # Fraction of the data used for evaluating the NN.
 TEST_SIZE = 0.3
 # Number of consecutive days inputted in the NN to predict the next Adj
 # Close.
-NUM_DAYS = 7
+NUM_DAYS = 1
 
 def main():
     """
@@ -34,16 +38,14 @@ def main():
             break
 
     # Drop the Close column from data.
-    data.drop(['Close'], axis = 1, inplace = True)
+    data.drop(['Close', 'Volume'], axis = 1, inplace = True)
     # Add a Next Close (next trading day's Adj Close) column to data.
     data["Next Close"] = data["Adj Close"].shift(-1)
-
-    print(data)
 
     # Convert the pandas DataFrame to a NumPy array.
     data_set = data.to_numpy()
 
-    data_set
+    print(data)
 
     # y contains Next Close values with at least NUM_DAYS-1 past days.
     y = list(data_set[NUM_DAYS-1:, -1]) 
@@ -53,40 +55,57 @@ def main():
     for i in range(NUM_DAYS-1, len(data_set)):
             past_stock_stats = [] 
             # Append the past NUM_DAYS stock stats to past_stock_stats.
-            for j in range(0, NUM_DAYS):
-                 past_stock_stats.append(data_set[j+(i-(NUM_DAYS-1)), :]) 
+            for j in range(0, NUM_DAYS): 
+                 """"
+                 For days i-(NUM_DAYS-1) to i, add the day's stats (row
+                 from data_set minus the Next Close column) to
+                 past_stock_stats.
+                 """
+                 past_stock_stats.append(data_set[j+(i-(NUM_DAYS-1)), :-1]) 
             # Append these stock stats to x.
             x.append(past_stock_stats)
 
     # Remove data from most recent trading day (no Next Close value).
     x.pop()
-    y.pop()
+    y.pop()    
 
     x_train, x_test, y_train, y_test = train_test_split(
          np.array(x), np.array(y), test_size = TEST_SIZE
     )
 
     # Get a compiled neural network
-    ##model = get_model()
-
-    print(y_train.shape)
-    print(x_train.shape)
-
+    model = get_model()
 
     # Fit model on training data
-    ##model.fit(x_train, y_train, epochs=EPOCHS)
+    model.fit(x_train, y_train, epochs=EPOCHS)
 
     # Evaluate neural network performance
-    ##model.evaluate(x_test,  y_test, verbose=2)
+    model.evaluate(x_test,  y_test, verbose=2)
 
-'''
+    y_pred= model.predict(x_test)
+    for i in range(10):
+         print(y_pred[i])
+         print(y_test[i])
+
+
 def get_model():
     """
     Returns a compiled LTSM neural network model. 
 
     Author: Oscar Afraymovich
     """
-    model = tf.keras.models.Sequential()
+    model = tf.keras.models.Sequential([
+         
+         tf.keras.layers.LSTM(256, input_shape = (7, 8)),
+         
+         tf.keras.layers.Dense(256, activation = "tanh"),
+
+         tf.keras.layers.Dense(256, activation = "tanh"),
+
+         tf.keras.layers.Dense(256, activation = "tanh"),
+
+         tf.keras.layers.Dense(1, activation = "linear"),
+    ])
 
     # Compile model
     model.compile(
@@ -95,7 +114,6 @@ def get_model():
         metrics = ["accuracy"]
     )     
     return model
-    '''
 
 
 if __name__ == "__main__":
