@@ -33,7 +33,7 @@ def main():
         else:
             break
 
-    # Drop the Close column from data.
+    # Drop the Close and Volume columns from data.
     data.drop(['Close', 'Volume'], axis = 1, inplace = True)
     # Add a Next Close (next trading day's Adj Close) column to data.
     data["Next Close"] = data["Adj Close"].shift(-1)
@@ -66,6 +66,7 @@ def main():
     x.pop()
     y.pop()    
 
+    # Split the data into testing and training sets
     x_train, x_test, y_train, y_test = train_test_split(
          np.array(x), np.array(y), test_size = TEST_SIZE
     )
@@ -77,13 +78,29 @@ def main():
     model.fit(x_train, y_train, epochs=EPOCHS)
 
     # Evaluate neural network performance
-    model.evaluate(x_test,  y_test, verbose=2)
+    model.evaluate(x_test, y_test, verbose=2)
 
-    y_pred= model.predict(x_test)
-    for i in range(40):
-         print("Predicted:", y_pred[i]*1000)
-         print("Actual:", y_test[i]*1000, "\n")
+    # Stock statistics from the last NUM_DAYS trading days.
+    currentData = []
+    past_stock_stats = [] # past_stock_stats should be empty.
 
+    # From day len(data)-NUM_DAYS to day len(data)-1:
+    for k in range(0, NUM_DAYS): 
+        """"
+        For the last NUM_DAYS trading days, add the day's stats
+        (row from data_set minus the Next Close column) to
+        past_stock_stats.
+        """
+        past_stock_stats.append(data_set[k+(len(data)-NUM_DAYS), :-1]) 
+        # Append these stock stats to currentData.
+    currentData.append(past_stock_stats)
+
+    # Resize currentData so it can be passed as input to the NN.
+    currentData = np.array(currentData).reshape(1,7,4)
+
+    # Predict the next trading day's Adj Close (scale price back by 1000)
+    prediction = model.predict(currentData)*1000 
+    print("Next trading day's predicted adjusted close: $", prediction[0][0])
 
 def get_model():
     """
