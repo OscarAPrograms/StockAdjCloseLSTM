@@ -100,6 +100,7 @@ def main():
 
     # Predict the next trading day's Adj Close (scale price back by 1000)
     prediction = model.predict(currentData)*1000 
+    # If the market is open, prediction is based on in progress stats
     print("Next trading day's predicted adjusted close: $", prediction[0][0])
 
 def get_model():
