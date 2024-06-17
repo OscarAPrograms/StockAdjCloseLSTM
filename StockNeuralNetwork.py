@@ -8,8 +8,8 @@ from sklearn.model_selection import train_test_split
 EPOCHS = 50
 # Fraction of the data used for evaluating the NN.
 TEST_SIZE = 0.3
-# Number of consecutive days inputted in the NN to predict the next Adj
-# Close.
+# Number of consecutive days inputted in the NN to predict the next
+# trading day's Adj Close.
 NUM_DAYS = 7
 
 def main():
@@ -22,13 +22,13 @@ def main():
     # Iterates until a valid stock ticker is inputted.
     while(True): 
         # Check input for a stock ticker.
-        ticker = input("Input a valid stock ticker to analyze.")
-        # Download entire history of the stock ticker.
-        data = yf.download(ticker, period = "5y")
+        ticker = input("\nInput a valid stock ticker to analyze. ")
+        # Download up to 10 years of history on the stock ticker.
+        data = yf.download(ticker, period = "10y")
 
         # If the stock ticker is not found: print an error message.
         if (len(data) == 0): 
-            print("Stock ticker not found, please try again.")
+            print("\nStock ticker not found, please try again.", end = "\r")
         # If the stock ticker is found: terminate the loop.
         else:
             break
