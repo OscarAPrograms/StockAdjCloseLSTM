@@ -24,7 +24,7 @@ def main():
         # Check input for a stock ticker.
         ticker = input("\nInput a valid stock ticker to analyze. ")
         # Download up to 10 years of history on the stock ticker.
-        data = yf.download(ticker, period = "10y")
+        data = yf.download(ticker, period = "10y", progress = False)
 
         # If the stock ticker is not found: print an error message.
         if (len(data) == 0): 
