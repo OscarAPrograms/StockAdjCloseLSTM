@@ -1,6 +1,8 @@
 import numpy as np
 import tensorflow as tf
 import yfinance as yf
+from datetime import date
+from datetime import datetime
 
 from sklearn.model_selection import train_test_split
 
@@ -38,6 +40,20 @@ def main():
     # Add a Next Close (next trading day's Adj Close) column to data.
     data["Next Close"] = data["Adj Close"].shift(-1)
 
+    # Iterates until market_open equals either "Yes" or "No"
+    market_open = ""
+    while ((market_open != "Yes") and (market_open != "No")):
+         # Ask user if the stock is in its regular market hours
+         market_open = input("\nIs the inputted stock currently in its "
+                            "regular market hours? Make sure to enter either"
+                            " \"Yes\" or \"No\". ")
+         
+    # When in regular market hours, remove data on the latest trading 
+    # day (its stock stats are not yet fixed).
+    if (market_open == "Yes"):
+             # Drop the last row in data 
+             data.drop(data.index[-1], inplace = True)
+
     # Convert the pandas DataFrame to a NumPy array.
     data_set = data.to_numpy()
 
@@ -62,9 +78,13 @@ def main():
             # Append these stock stats to x.
             x.append(past_stock_stats)
 
-    # Remove data from most recent trading day (no Next Close value).
+    """
+    Remove data on the latest COMPLETE trading day from x and y (it has
+    no Next Close value if the market is closed or no fixed Next Close
+    value if the market is open)
+    """
     x.pop()
-    y.pop()    
+    y.pop() 
 
     # Split the data into testing and training sets
     x_train, x_test, y_train, y_test = train_test_split(
@@ -79,16 +99,17 @@ def main():
 
     # Evaluate neural network performance
     model.evaluate(x_test, y_test, verbose=2)
+    
 
-    # Stock statistics from the last NUM_DAYS trading days.
+    # Stock statistics from the last NUM_DAYS complete trading days.
     currentData = []
     past_stock_stats = [] # past_stock_stats should be empty.
 
     # From day len(data)-NUM_DAYS to day len(data)-1:
     for k in range(0, NUM_DAYS): 
         """"
-        For the last NUM_DAYS trading days, add the day's stats
-        (row from data_set minus the Next Close column) to
+        For the last NUM_DAYS complete trading days, add the day's
+        stats (row from data_set minus the Next Close column) to
         past_stock_stats.
         """
         past_stock_stats.append(data_set[k+(len(data)-NUM_DAYS), :-1]) 
@@ -97,11 +118,11 @@ def main():
 
     # Resize currentData so it can be passed as input to the NN.
     currentData = np.array(currentData).reshape(1,7,4)
-
-    # Predict the next trading day's Adj Close (scale price back by 1000)
+    # Predict the next Adj Close (scale price back by 1000)
     prediction = model.predict(currentData)*1000 
-    # If the market is open, prediction is based on in progress stats
-    print("Next trading day's predicted adjusted close: $", prediction[0][0])
+    print("Predicted next adjusted close: $", prediction[0][0])
+
+
 
 def get_model():
     """
