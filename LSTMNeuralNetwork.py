@@ -1,8 +1,6 @@
 import numpy as np
 import tensorflow as tf
 import yfinance as yf
-from datetime import date
-from datetime import datetime
 
 from sklearn.model_selection import train_test_split
 
