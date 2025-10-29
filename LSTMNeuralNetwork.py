@@ -6,7 +6,7 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import train_test_split
 
 # Number of iterations the NN takes to train on the data.
-EPOCHS = 2
+EPOCHS = 50
 # Fraction of the data used for evaluating the NN.
 TEST_SIZE = 0.2
 # Number of consecutive days inputted in the NN to predict the next
